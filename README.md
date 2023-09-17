@@ -38,5 +38,11 @@ Debianであればapt-get install irstlmでIRSTLMをインストールできる�
 
 ## 結果
 
-現時点において、得られたdata.arpaを使用してもlibkkc-dataによる辞書の作成は行えない。sortlm.pyの修正が必要なことが分かっているが、これに加えてlibkkc本体の修正を行わないとsegmentation faultを起こすことも分かっている。また、頻度1000以上の3-gramデータを使用しているが、これでもデータ数が多いのか環境次第ではlibkkc-dataによる辞書データの作成においてメモリ不足が発生してしまう。これを回避するため、出現頻度1800以上の3-gramを使用するよう制限している（生成されたdata.arpaの1-gramのエントリ数とのバランスを考え、この出現頻度とした）。
+libkkc, libkkc-data(sortlm.py)が使用するdata.arpaには、以下のような要件が求められているようだ。
 
+1. 1-gramを単語の一覧とする
+2. 2-gramは1-gramで定義された単語のペアである
+3. 3-gramは2-gramで定義された単語のペア＋1-gramで定義された単語である
+4. 1-gramはBOS(<s>)およびEOS(</s>)のエントリを含む
+
+現実的にこれを満たすdata.arpaを生成することは難しいため、[sortlm.pyの修正を行って](https://github.com/ueno/libkkc/pull/46/files)対応できるようにした。OpenBSD/amd64上では頻度1000以上の3-gramデータで生成した辞書を使用できているが、辞書の生成時はメモリを大量に消費するため、現時点ではrootでしか辞書を生成できない（おそらく他環境では一般ユーザでも生成できるのではないかと思われる）。
