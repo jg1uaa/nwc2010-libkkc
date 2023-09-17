@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-src/calc 3 3gm-0000 3gm.out 1800
+src/calc 3 3gm-0000 3gm.out
 
 # convert to format ARPA with IRSTLM
 # reference: A tutorial on the IRSTLM library (Nicola Bertoldi, 2008)
