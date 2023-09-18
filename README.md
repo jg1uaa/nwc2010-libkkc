@@ -5,7 +5,7 @@ libkkc-dataのdata.arpaを[日本語ウェブコーパス2010](https://www.s-yat
 
 ## はじめに
 
-2023年において個人が自由に利用可能な言語資源は、[日本語ウェブコーパス2010](https://www.s-yata.jp/corpus/nwc2010/)のみである。[Web日本語Nグラム](https://www.gsk.or.jp/catalog/gsk2007-c/)(Google)や[Yahoo!知恵袋データ](https://www.nii.ac.jp/dsc/idr/yahoo/chiebkr3/Y_chiebukuro.html)等、多くの言語資源においては利用に際し多額の支払いを要したり、研究目的に限定されている（学術機関への所属が必要）という制約があるため、OSS開発目的への考慮が何一つされていないという非常に由々しき問題が存在していることを記す。
+2023年において個人が自由に利用可能な日本語の言語資源は、日本国内にあるものに関しては[日本語ウェブコーパス2010](https://www.s-yata.jp/corpus/nwc2010/)のみである。[Web日本語Nグラム](https://www.gsk.or.jp/catalog/gsk2007-c/)(Google)や[Yahoo!知恵袋データ](https://www.nii.ac.jp/dsc/idr/yahoo/chiebkr3/Y_chiebukuro.html)等、多くの言語資源においては利用に際し多額の支払いを要したり、研究目的に限定されている（学術機関への所属が必要）という制約があるため、OSS開発目的への考慮が何一つされていないという非常に由々しき問題が存在していることを記す。
 
 ## 目的
 
