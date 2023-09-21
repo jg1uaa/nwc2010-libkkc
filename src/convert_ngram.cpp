@@ -4,6 +4,7 @@
 #include <cstring>
 #include "convert_ngram.h"
 #include "datastore.h"
+#include "yomi.h"
 
 int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 {
@@ -28,7 +29,7 @@ int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 			goto fin;
 		}
 
-		if (call_mecab(yomi_mbs[i], token_mbs[i]) < 0 ||
+		if (yomi_engine->convert(yomi_mbs[i], token_mbs[i]) < 0 ||
 		    convert_yomi(yomi_mbs[i], CONV_BUFSIZE_MBS))
 			goto fin;
 	}
@@ -54,13 +55,6 @@ fin:
 void convert_ngram::do_file(FILE *fpi, FILE *fpo, int ngrams, int64_t limit)
 {
 	data_store<int64_t> d;
-	const char *mecab_argv[] = {"mecab", "-Oyomi"};
-
-	if ((mctx = mecab_new(sizeof(mecab_argv) / sizeof(char *),
-			      (char **)mecab_argv)) == NULL) {
-		fprintf(stderr, "mecab_new failed\n");
-		return;
-	}
 
 	/* pass 1 */
 	d.init();
@@ -77,6 +71,4 @@ void convert_ngram::do_file(FILE *fpi, FILE *fpo, int ngrams, int64_t limit)
 		fprintf(fpo, "%ls\t%ld\n",
 			d.db[i->first].key.c_str(), d.db[i->first].value);
 	}
-
-	mecab_destroy(mctx);
 }

@@ -6,6 +6,9 @@
 #include <cstring>
 #include <clocale>
 #include "convert_ngram.h"
+#include "yomi_mecab.h"
+
+yomi *yomi_engine;
 
 int main(int argc, char *argv[])
 {
@@ -38,10 +41,13 @@ int main(int argc, char *argv[])
 
 	limit = (argc < 5) ? 0 : atoll(argv[4]);
 
-	setlocale(LC_ALL, "ja_JP.UTF-8");
+	yomi_engine = new yomi_mecab;
 
+	setlocale(LC_ALL, "ja_JP.UTF-8");
 	cn.do_file(fpi, fpo, ngrams, limit);
-	
+
+	delete yomi_engine;
+
 	fclose(fpo);
 fin1:
 	fclose(fpi);

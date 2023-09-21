@@ -7,7 +7,6 @@
 #include <cwchar>
 #include <cstdio>
 #include <cstdint>
-#include <mecab.h>
 
 #define BOS 1	// begin of sentence
 #define EOS 2	// end of sentence
@@ -25,7 +24,6 @@ protected:
 	int tokenize(wchar_t *tokens[], int max_token, wchar_t *in_buf);
 	ssize_t convert_token(char *mbs, wchar_t *wc, size_t sz);
 	int convert_yomi(char *yomi, size_t sz);
-	int call_mecab(char *out, char *in);
 	int create_result(wchar_t *result, char *yomi, char *token, size_t sz);
   
 	wchar_t in_line[CONV_BUFSIZE], out_line[CONV_BUFSIZE];
@@ -33,8 +31,6 @@ protected:
 	char token_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
 	char yomi_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
 	wchar_t result[MAX_NGRAMS][CONV_BUFSIZE];
-
-	mecab_t *mctx;
 };
 
 #endif

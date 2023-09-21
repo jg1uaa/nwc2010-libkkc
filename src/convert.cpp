@@ -62,30 +62,6 @@ fin:
 	return ret;
 }
 
-int convert::call_mecab(char *out, char *in)
-{
-	int ret = -1;
-	const char *p;
-
-	if ((p = mecab_sparse_tostr(mctx, in)) == NULL)
-		goto fin;
-
-	/* copy with removing garbage (trailing LF) */
-	while (*p) {
-		if (*p > '\0' && *p < ' ')
-			break;
-		if (*p == ' ')
-			p++;
-		else
-			*out++ = *p++;
-	}
-	*out = '\0';
-
-	ret = 0;
-fin:
-	return ret;
-}
-
 int convert::create_result(wchar_t *result, char *yomi, char *token, size_t sz)
 {
 	ssize_t n;
