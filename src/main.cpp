@@ -7,14 +7,9 @@
 #include <clocale>
 #include "convert_ngram.h"
 
-extern "C" {
-#include <libkakasi.h>
-};
-
 int main(int argc, char *argv[])
 {
 	FILE *fpi, *fpo;
-	const char *kakasi_argv[] = {"kakasi", "-ieuc", "-KH", "-JH"};
 	int ngrams;
 	int64_t limit;
 	convert_ngram cn;
@@ -22,12 +17,6 @@ int main(int argc, char *argv[])
 	if (argc < 4) {
 		fprintf(stderr, "%s: usage [ngrams] [infile] [outfile] "
 			"[limit]\n", argv[0]);
-		goto fin0;
-	}
-
-	if (kakasi_getopt_argv(sizeof(kakasi_argv) / sizeof(char *),
-			       (char **)kakasi_argv)) {
-		fprintf(stderr, "kakasi_getopt_argv\n");
 		goto fin0;
 	}
 

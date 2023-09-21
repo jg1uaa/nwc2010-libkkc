@@ -7,12 +7,14 @@
 #include <cwchar>
 #include <cstdio>
 #include <cstdint>
+#include <mecab.h>
 
 #define BOS 1	// begin of sentence
 #define EOS 2	// end of sentence
 
 #define MAX_NGRAMS 3
 #define CONV_BUFSIZE 512
+#define CONV_BUFSIZE_MBS (CONV_BUFSIZE * sizeof(wchar_t))
 
 class convert {
 public:
@@ -21,18 +23,18 @@ public:
 
 protected:
 	int tokenize(wchar_t *tokens[], int max_token, wchar_t *in_buf);
-	int convert_token(uint16_t *euc, wchar_t *wc);
-	int revert_token(wchar_t *wc, uint16_t *euc);
-	void terminate_fix(char *str);
-	int check_yomi(uint16_t *euc);
-	int call_kakasi(char *out, char *in);
-	int create_result(wchar_t *result, uint16_t *yomi, uint16_t *token);
+	ssize_t convert_token(char *mbs, wchar_t *wc, size_t sz);
+	int convert_yomi(char *yomi, size_t sz);
+	int call_mecab(char *out, char *in);
+	int create_result(wchar_t *result, char *yomi, char *token, size_t sz);
   
 	wchar_t in_line[CONV_BUFSIZE], out_line[CONV_BUFSIZE];
 	wchar_t *token_wc[MAX_NGRAMS + 2];
-	uint16_t token_euc[MAX_NGRAMS][CONV_BUFSIZE];
-	uint16_t yomi_euc[MAX_NGRAMS][CONV_BUFSIZE];
+	char token_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
+	char yomi_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
 	wchar_t result[MAX_NGRAMS][CONV_BUFSIZE];
+
+	mecab_t *mctx;
 };
 
 #endif

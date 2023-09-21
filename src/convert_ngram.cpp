@@ -18,21 +18,24 @@ int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 
 	for (i = 0; i < ngrams; i++) {
 		if (!wcscasecmp(token_wc[i], L"<S>")) {
-			yomi_euc[i][0] = BOS;
+			yomi_mbs[i][0] = BOS;
 			continue;
 		} else if (!wcscasecmp(token_wc[i], L"</S>")) {
-			yomi_euc[i][0] = EOS;
+			yomi_mbs[i][0] = EOS;
 			continue;
-		} else if (convert_token(token_euc[i], token_wc[i]) < 0) {
+		} else if (convert_token(token_mbs[i], token_wc[i],
+					 CONV_BUFSIZE_MBS) < 0) {
 			goto fin;
 		}
 
-		if (call_kakasi((char *)yomi_euc[i], (char *)token_euc[i]) < 0)
+		if (call_mecab(yomi_mbs[i], token_mbs[i]) < 0 ||
+		    convert_yomi(yomi_mbs[i], CONV_BUFSIZE_MBS))
 			goto fin;
 	}
 
 	for (i = 0; i < ngrams; i++) {
-		if (create_result(result[i], yomi_euc[i], token_euc[i]) < 0)
+		if (create_result(result[i], yomi_mbs[i], token_mbs[i],
+				  CONV_BUFSIZE) < 0)
 			goto fin;
 	}
 
@@ -51,6 +54,13 @@ fin:
 void convert_ngram::do_file(FILE *fpi, FILE *fpo, int ngrams, int64_t limit)
 {
 	data_store<int64_t> d;
+	const char *mecab_argv[] = {"mecab", "-Oyomi"};
+
+	if ((mctx = mecab_new(sizeof(mecab_argv) / sizeof(char *),
+			      (char **)mecab_argv)) == NULL) {
+		fprintf(stderr, "mecab_new failed\n");
+		return;
+	}
 
 	/* pass 1 */
 	d.init();
@@ -67,4 +77,6 @@ void convert_ngram::do_file(FILE *fpi, FILE *fpo, int ngrams, int64_t limit)
 		fprintf(fpo, "%ls\t%ld\n",
 			d.db[i->first].key.c_str(), d.db[i->first].value);
 	}
+
+	mecab_destroy(mctx);
 }

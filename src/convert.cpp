@@ -2,15 +2,8 @@
 // SPDX-FileCopyrightText: 2023 SASANO Takayoshi <uaa@uaa.org.uk>
 
 #include <cstring>
-#include <endian.h>
+#include <cstdlib>
 #include "convert.h"
-
-extern "C" {
-#include <libkakasi.h>
-
-extern uint16_t ucs2euc[65536];
-extern uint16_t euc2ucs[65536];
-};
 
 int convert::tokenize(wchar_t *tokens[], int max_token, wchar_t *in)
 {
@@ -20,108 +13,83 @@ int convert::tokenize(wchar_t *tokens[], int max_token, wchar_t *in)
 	for (i = 0; i < max_token; i++) {
 		tokens[i] = wcstok(i ? NULL : in, L" \t\n", &wp);
 		if (tokens[i] == NULL)
-			return -1;		  
+			return -1;
 	}
 
 	return 0;
 }
 
-int convert::convert_token(uint16_t *euc, wchar_t *wc)
+ssize_t convert::convert_token(char *mbs, wchar_t *wc, size_t sz)
 {
-	int i, ret = -1;
+	/* first character should not "ー" (U+30FC) */
+	return (*wc == 0x30fc) ? -1 : (ssize_t)wcstombs(mbs, wc, sz);
+}
 
-	for (i = 0; *wc; i++, wc++) {
-		if (*wc >= (wchar_t)(sizeof(ucs2euc) / sizeof(uint16_t)))
+int convert::convert_yomi(char *yomi, size_t sz)
+{
+	size_t i;
+	int ret = -1;
+	wchar_t temp[CONV_BUFSIZE];
+
+	if ((ssize_t)mbstowcs(temp, yomi, CONV_BUFSIZE) < 0)
+		goto fin;
+
+	/* convert katakana -> hiragana */
+	for (i = 0; i < wcslen(temp); i++) {
+		/* CJK unified ideographs:
+		 * retry convert (for kakasi errata) */
+		if (temp[i] >= 0x4e00 && temp[i] <= 0x9fff) {
+			ret = 1;
 			goto fin;
-	
-		/* use bigendian to put result into kakasi directly */
-		if (!(euc[i] = htobe16(ucs2euc[*wc])))
+		}
+
+		/* result should be "ー", "ぁ" - "ん" , or "ァ" - "ヴ" */
+		if (temp[i] != 0x30fc &&
+		    !(temp[i] >= 0x3041 && temp[i] <= 0x3093) &&
+		    !(temp[i] >= 0x30a1 && temp[i] <= 0x30f4))
 			goto fin;
+
+		/* convert to hiragana (except "ー" and "ヴ") */
+		if (temp[i] >= 0x30a1 && temp[i] < 0x30f4)
+			temp[i] -= 0x60;
 	}
-	euc[i] = 0;
 
-	ret = i;
+	if ((ssize_t)wcstombs(yomi, temp, sz) < 0)
+		goto fin;
+
+	ret = 0;
 fin:
 	return ret;
 }
 
-int convert::revert_token(wchar_t *wc, uint16_t *euc)
+int convert::call_mecab(char *out, char *in)
 {
-	int i, ret = -1;
+	int ret = -1;
+	const char *p;
 
-	for (i = 0; *euc; i++, euc++) {
-		/* euc is stored as bigendian */
-		if (!(wc[i] = euc2ucs[be16toh(*euc)]))
-			goto fin;
-	}
-	wc[i] = L'\0';
+	if ((p = mecab_sparse_tostr(mctx, in)) == NULL)
+		goto fin;
 
-	ret = i;
-fin:
-	return ret;
-}
-
-void convert::terminate_fix(char *str)
-{
-	size_t n;
-
-	n = strlen(str) + 1;
-
-	/* fix string terminator for 16bit read */
-	str[n++] = '\0';
-	if (n % 1) str[n] = '\0';
-}
-
-int convert::check_yomi(uint16_t *euc)
-{
-	/* kakasi returns nothing when convert failed? */
-	if (!strlen((char *)euc))
-		return -1;
-
-	/* if first character is "ー" (JIS 0x213c), filter out
-	 * (this should be done before calling kakasi XXX) */
-	if (be16toh(*euc) == 0xa1bc)
-		return -1;
-
-	/* kakasi sometimes returns invalid yomi character (kanji) */
-	for(; *euc; euc++) {
-		if (be16toh(*euc) >= 0xb0a1) /* JIS 0x3021 */
-			return 1;
-	}
-
-	return 0;
-}
-
-int convert::call_kakasi(char *out, char *in)
-{
-	int ret;
-	char *p;
-	char temp[CONV_BUFSIZE * sizeof(uint16_t)] __attribute__((aligned(4)));
-
-	strcpy(temp, in);
-
-	/* kakasi sometimes fails kanji -> hiragana conversion,
-	 * for example: "蹴っ飛ばす" -> "けっ飛ばす" not "けっとばす".
-	 * retry is a workaround, max retry count is preliminary XXX */
-	for (size_t i = 0; i < strlen(in); i++) {
-		p = kakasi_do(temp);
-		strcpy(out, p);
-		terminate_fix(out);
-		kakasi_free(p);
-
-		ret = check_yomi((uint16_t *)out);
-		if (ret < 1)
+	/* copy with removing garbage (trailing LF) */
+	while (*p) {
+		if (*p > '\0' && *p < ' ')
 			break;
-
-		strcpy(temp, p);
+		if (*p == ' ')
+			p++;
+		else
+			*out++ = *p++;
 	}
+	*out = '\0';
 
+	ret = 0;
+fin:
 	return ret;
 }
 
-int convert::create_result(wchar_t *result, uint16_t *yomi, uint16_t *token)
+int convert::create_result(wchar_t *result, char *yomi, char *token, size_t sz)
 {
-	int n, ret = -1;
+	ssize_t n;
+	int ret = -1;
 
 	switch (yomi[0]) {
 	case BOS:
@@ -136,14 +104,14 @@ int convert::create_result(wchar_t *result, uint16_t *yomi, uint16_t *token)
 		n = 0;
 		break;
 	default:
-		if ((n = revert_token(result, yomi)) < 0)
+		if ((n = (ssize_t)mbstowcs(result, yomi, sz)) < 0)
 			goto fin;
 
 		result[n++] = L'/';
 		break;
 	}
 
-	if (revert_token(result + n, token) < 0)
+	if ((ssize_t)mbstowcs(result + n, token, sz - n) < 0)
 		goto fin;
 
 	ret = 0;
