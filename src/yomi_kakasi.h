@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 SASANO Takayoshi <uaa@uaa.org.uk>
 
-#ifndef YOMI_MECAB_H
-#define YOMI_MECAB_H
+#ifndef YOMI_KAKASI_H
+#define YOMI_KAKASI_H
 
-#include <mecab.h>
+extern "C" {
+#include <libkakasi.h>
+}
 #include "yomi.h"
 
-class yomi_mecab : public yomi {
+class yomi_kakasi : public yomi {
 public:
-	yomi_mecab(void);
+	yomi_kakasi(void);
 	int convert(wchar_t *inout, size_t sz);
-	~yomi_mecab(void);
-
-private:
-	mecab_t *mctx;  
+	~yomi_kakasi(void);
 };
 
 #endif

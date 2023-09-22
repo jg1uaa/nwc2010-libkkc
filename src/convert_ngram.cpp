@@ -9,8 +9,8 @@
 int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 {
 	int64_t ret = -1;  
-	int i;
-	wchar_t *wp;
+	int i, retry;
+	wchar_t *wp, temp[CONV_BUFSIZE];
 	long long c;
 
 	if (tokenize(token_wc, ngrams + 1, in_buf) < 0)
@@ -19,24 +19,35 @@ int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 
 	for (i = 0; i < ngrams; i++) {
 		if (!wcscasecmp(token_wc[i], L"<S>")) {
-			yomi_mbs[i][0] = BOS;
+			yomi_wc[i][0] = BOS;
 			continue;
 		} else if (!wcscasecmp(token_wc[i], L"</S>")) {
-			yomi_mbs[i][0] = EOS;
+			yomi_wc[i][0] = EOS;
 			continue;
-		} else if (convert_token(token_mbs[i], token_wc[i],
-					 CONV_BUFSIZE_MBS) < 0) {
+		} else if (check_token(token_wc[i]) < 0) {
 			goto fin;
 		}
 
-		if (yomi_engine->convert(yomi_mbs[i], token_mbs[i]) < 0 ||
-		    convert_yomi(yomi_mbs[i], CONV_BUFSIZE_MBS))
-			goto fin;
+		yomi_wc[i][0] = L'\0';
+		wcscpy(temp, token_wc[i]);
+		do {
+			if (yomi_engine->convert(temp, CONV_BUFSIZE) < 0)
+				goto fin;
+
+			/* sometimes yomi engine fails, retry */
+			retry = convert_yomi(temp);
+			if (retry < 0 ||
+			    (retry > 0 && !wcscmp(yomi_wc[i], temp))) {
+				/* error or nothing converted when retry */
+				goto fin;
+			}
+
+			wcscpy(yomi_wc[i], temp);
+		} while (retry);
 	}
 
 	for (i = 0; i < ngrams; i++) {
-		if (create_result(result[i], yomi_mbs[i], token_mbs[i],
-				  CONV_BUFSIZE) < 0)
+		if (create_result(result[i], yomi_wc[i], token_wc[i]) < 0)
 			goto fin;
 	}
 

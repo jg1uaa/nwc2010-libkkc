@@ -8,23 +8,26 @@ yomi_mecab::yomi_mecab(void)
 {
 	const char *mecab_argv[] = {"mecab", "-Oyomi"};
 
-	mctx = mecab_new(sizeof(mecab_argv) / sizeof(char *),
-			 (char **)mecab_argv);
-
-	if (mctx == NULL)
+	if ((mctx = mecab_new(sizeof(mecab_argv) / sizeof(char *),
+			      (char **)mecab_argv)) == NULL)
 		throw(std::invalid_argument("mecab_new error"));
 }
 
-int yomi_mecab::convert(char *out, const char *in)
+int yomi_mecab::convert(wchar_t *inout, size_t sz)
 {
 	int ret = -1;
 	const char *p;
+	char in[CONV_BUFSIZE_MBS], out[CONV_BUFSIZE_MBS];
 
-	if ((p = mecab_sparse_tostr(mctx, in)) == NULL)
+	if ((ssize_t)wcstombs(in, inout, CONV_BUFSIZE_MBS) < 0 ||
+	    (p = mecab_sparse_tostr(mctx, in)) == NULL)
 		goto fin;
 
 	copy_result(out, p);
-	
+
+	if ((ssize_t)mbstowcs(inout, out, sz) < 0)
+		goto fin;
+
 	ret = 0;
 fin:
 	return ret;

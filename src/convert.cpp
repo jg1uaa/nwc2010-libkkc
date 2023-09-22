@@ -19,52 +19,61 @@ int convert::tokenize(wchar_t *tokens[], int max_token, wchar_t *in)
 	return 0;
 }
 
-ssize_t convert::convert_token(char *mbs, wchar_t *wc, size_t sz)
-{
-	/* first character should not "ー" (U+30FC) */
-	return (*wc == 0x30fc) ? -1 : (ssize_t)wcstombs(mbs, wc, sz);
-}
-
-int convert::convert_yomi(char *yomi, size_t sz)
+int convert::convert_yomi(wchar_t *yomi)
 {
 	size_t i;
 	int ret = -1;
-	wchar_t temp[CONV_BUFSIZE];
-
-	if ((ssize_t)mbstowcs(temp, yomi, CONV_BUFSIZE) < 0)
-		goto fin;
 
 	/* convert katakana -> hiragana */
-	for (i = 0; i < wcslen(temp); i++) {
+	for (i = 0; i < wcslen(yomi); i++) {
 		/* CJK unified ideographs:
 		 * retry convert (for kakasi errata) */
-		if (temp[i] >= 0x4e00 && temp[i] <= 0x9fff) {
+		if (yomi[i] >= 0x4e00 && yomi[i] <= 0x9fff) {
 			ret = 1;
 			goto fin;
 		}
 
-		/* result should be "ー", "ぁ" - "ん" , or "ァ" - "ヴ" */
-		if (temp[i] != 0x30fc &&
-		    !(temp[i] >= 0x3041 && temp[i] <= 0x3093) &&
-		    !(temp[i] >= 0x30a1 && temp[i] <= 0x30f4))
+		if (yomi[i] != L'ー' &&
+		    !(yomi[i] >= L'ぁ' && yomi[i] <= L'ん') &&
+		    !(yomi[i] >= L'ァ' && yomi[i] <= L'ヴ'))
 			goto fin;
 
-		/* convert to hiragana (except "ー" and "ヴ") */
-		if (temp[i] >= 0x30a1 && temp[i] < 0x30f4)
-			temp[i] -= 0x60;
+		/* convert to hiragana (except "ー" and "") */
+		if (yomi[i] >= L'ァ' && yomi[i] < L'ヴ')
+			yomi[i] -= 0x60;
 	}
-
-	if ((ssize_t)wcstombs(yomi, temp, sz) < 0)
-		goto fin;
 
 	ret = 0;
 fin:
 	return ret;
 }
 
-int convert::create_result(wchar_t *result, char *yomi, char *token, size_t sz)
+int convert::check_token(wchar_t *token)
 {
-	ssize_t n;
+	size_t i;
+	int ret = -1;
+
+	/* check first character */
+	if (*token == L'ー' || *token == L'々')
+		goto fin;
+
+	/* some ideographic marks and hiragana, katakana, CJK is permitted */
+	for (i = 0; i < wcslen(token); i++) {
+		if (token[i] != L'ー' && token[i] != L'々' &&
+		    !(token[i] >= L'ぁ' && token[i] <= L'ん') &&
+		    !(token[i] >= L'ァ' && token[i] <= L'ヶ') &&
+		    !(token[i] >= 0x4e00 && token[i] <= 0x9fff))
+			goto fin;
+	}
+
+	ret = 0;
+fin:
+	return ret;
+}
+
+int convert::create_result(wchar_t *result, wchar_t *yomi, wchar_t *token)
+{
+	size_t n;
 	int ret = -1;
 
 	switch (yomi[0]) {
@@ -80,16 +89,13 @@ int convert::create_result(wchar_t *result, char *yomi, char *token, size_t sz)
 		n = 0;
 		break;
 	default:
-		if ((n = (ssize_t)mbstowcs(result, yomi, sz)) < 0)
-			goto fin;
-
+		wcscpy(result, yomi);
+		n = wcslen(result);
 		result[n++] = L'/';
 		break;
 	}
 
-	if ((ssize_t)mbstowcs(result + n, token, sz - n) < 0)
-		goto fin;
-
+	wcscpy(result + n, token);
 	ret = 0;
 fin:
 	return ret;

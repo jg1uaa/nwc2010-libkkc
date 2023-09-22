@@ -7,13 +7,10 @@
 #include <cwchar>
 #include <cstdio>
 #include <cstdint>
+#include "param.h"
 
 #define BOS 1	// begin of sentence
 #define EOS 2	// end of sentence
-
-#define MAX_NGRAMS 3
-#define CONV_BUFSIZE 512
-#define CONV_BUFSIZE_MBS (CONV_BUFSIZE * sizeof(wchar_t))
 
 class convert {
 public:
@@ -22,14 +19,13 @@ public:
 
 protected:
 	int tokenize(wchar_t *tokens[], int max_token, wchar_t *in_buf);
-	ssize_t convert_token(char *mbs, wchar_t *wc, size_t sz);
-	int convert_yomi(char *yomi, size_t sz);
-	int create_result(wchar_t *result, char *yomi, char *token, size_t sz);
+	int check_token(wchar_t *token);
+	int convert_yomi(wchar_t *yomi);
+	int create_result(wchar_t *result, wchar_t *yomi, wchar_t *token);
   
 	wchar_t in_line[CONV_BUFSIZE], out_line[CONV_BUFSIZE];
 	wchar_t *token_wc[MAX_NGRAMS + 2];
-	char token_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
-	char yomi_mbs[MAX_NGRAMS][CONV_BUFSIZE_MBS];
+	wchar_t yomi_wc[MAX_NGRAMS][CONV_BUFSIZE];
 	wchar_t result[MAX_NGRAMS][CONV_BUFSIZE];
 };
 

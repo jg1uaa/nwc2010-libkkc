@@ -4,9 +4,12 @@
 #ifndef YOMI_H
 #define YOMI_H
 
+#include <cwchar>
+#include "param.h"
+
 class yomi {
 public:
-	virtual int convert(char *out, const char *in) = 0;
+	virtual int convert(wchar_t *inout, size_t sz) = 0;
 	virtual ~yomi(){};  
 
 protected:

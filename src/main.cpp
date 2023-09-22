@@ -6,6 +6,7 @@
 #include <cstring>
 #include <clocale>
 #include "convert_ngram.h"
+#include "yomi_kakasi.h"
 #include "yomi_mecab.h"
 
 yomi *yomi_engine;

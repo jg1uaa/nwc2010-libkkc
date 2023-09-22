@@ -1,5 +1,5 @@
 TARGET = calc
-OBJS = convert.o convert_ngram.o yomi.o yomi_mecab.o main.o
+OBJS = convert.o convert_ngram.o yomi.o yomi_kakasi.o yomi_mecab.o main.o
 CFLAGS = -O2 -Wall
 CXXFLAGS = -O2 -Wall -std=c++17
 
@@ -14,6 +14,9 @@ convert_ngram.o: convert_ngram.cpp
 yomi.o: yomi.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
+yomi_kakasi.o: yomi_kakasi.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
 yomi_mecab.o: yomi_mecab.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
@@ -21,7 +24,7 @@ main.o: main.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -lmecab -o $@
+	$(CXX) $(OBJS) -lkakasi -lmecab -o $@
 
 clean:
 	$(RM) -rf $(TARGET) $(OBJS)
