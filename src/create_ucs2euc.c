@@ -47,12 +47,6 @@ static int input_table(char *filename)
 		    jis <= 0 || jis >= TABLE_SIZE)
 			continue;
 
-		/* kakasi does not support except kanji/hiragana/katakana */
-		if ((jis != 0x2139) && // "々"
-		    (jis != 0x213c) && // "ー"
-		    (jis < 0x2421 || (jis >= 0x2621 && jis < 0x3021)))
-			continue;
-
 		/* create unicode <- -> EUC-JP table */
 		ucs2euc[unicode] = jis2euc(jis);
 		euc2ucs[jis2euc(jis)] = unicode;
