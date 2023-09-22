@@ -2,7 +2,7 @@
 
 set -x
 
-src/calc 3 3gm 3gm.out $1
+src/add_yomi 3 3gm 3gm.out $1
 
 # convert to format ARPA with IRSTLM
 # reference: A tutorial on the IRSTLM library (Nicola Bertoldi, 2008)

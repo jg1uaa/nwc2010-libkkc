@@ -1,5 +1,6 @@
-TARGET = calc
-OBJS = ucs2euc.o convert.o convert_ngram.o main.o yomi.o yomi_kakasi.o yomi_mecab.o
+TARGET = add_yomi
+OBJS = ucs2euc.o convert.o convert_ngram.o main.o yomi.o \
+	yomi_kakasi.o yomi_mecab.o
 CFLAGS = -O2 -Wall
 CXXFLAGS = -O2 -Wall -std=c++17
 
