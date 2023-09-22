@@ -17,15 +17,15 @@ int yomi_mecab::convert(wchar_t *inout, size_t sz)
 {
 	int ret = -1;
 	const char *p;
-	char in[CONV_BUFSIZE_MBS], out[CONV_BUFSIZE_MBS];
+	char temp[CONV_BUFSIZE_MBS];
 
-	if ((ssize_t)wcstombs(in, inout, CONV_BUFSIZE_MBS) < 0 ||
-	    (p = mecab_sparse_tostr(mctx, in)) == NULL)
+	if ((ssize_t)wcstombs(temp, inout, CONV_BUFSIZE_MBS) < 0 ||
+	    (p = mecab_sparse_tostr(mctx, temp)) == NULL)
 		goto fin;
 
-	copy_result(out, p);
+	copy_result(temp, p);
 
-	if ((ssize_t)mbstowcs(inout, out, sz) < 0)
+	if ((ssize_t)mbstowcs(inout, temp, sz) < 0)
 		goto fin;
 
 	ret = 0;

@@ -5,13 +5,16 @@
 
 void yomi::copy_result(char *out, const char *in)
 {
-	while (*in) {
-		if (*in > '\0' && *in < ' ')
-			break;
-		if (*in == ' ')
-			in++;
-		else
-			*out++ = *in++;
+	size_t n = 0;
+
+	/* remove space and control char (for MeCab) */
+	for (; *in; in++) {
+		if (!(*in > '\0' && *in < ' '))
+			out[n++] = *in;
 	}
-	*out = '\0';
+
+	/* string terminator for 16bit read (for kakasi) */
+	out[n++] = '\0';
+	out[n++] = '\0';
+	if (n % 1) out[n] = '\0';
 }
