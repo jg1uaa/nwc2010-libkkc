@@ -5,46 +5,76 @@
 #include <cstdlib>
 #include <cstring>
 #include <clocale>
+#include <unistd.h>
 #include "convert_ngram.h"
 #include "yomi_kakasi.h"
 #include "yomi_mecab.h"
 
 yomi *yomi_engine;
 
+#define ENGINE_KAKASI	0
+#define ENGINE_MECAB	1
+
 int main(int argc, char *argv[])
 {
 	FILE *fpi, *fpo;
-	int ngrams;
-	int64_t limit;
+	char *infile = NULL, *outfile = NULL;
+	int ch, ngrams = 0, engine = ENGINE_KAKASI;
+	int64_t limit = 0;
 	convert_ngram cn;
-	
-	if (argc < 4) {
-		fprintf(stderr, "%s: usage [ngrams] [infile] [outfile] "
-			"[limit]\n", argv[0]);
+
+	while ((ch = getopt(argc, argv, "i:o:n:l:KM")) != -1) {
+		switch (ch) {
+		case 'i':
+			infile = optarg;
+			break;
+		case 'o':
+			outfile = optarg;
+			break;
+		case 'n':
+			ngrams = atoi(optarg);
+			break;
+		case 'l':
+			limit = atoll(optarg);
+			break;
+		case 'K':
+			engine = ENGINE_KAKASI;
+			break;
+		case 'M':
+			engine = ENGINE_MECAB;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (infile == NULL || outfile == NULL || ngrams < 1 || ngrams > 3) {
+		fprintf(stderr, "usage: %s -i [infile] -o [outfile] "
+			"-n [ngrams(1-3)]\n", argv[0]);
 		goto fin0;
 	}
 
-	ngrams = atoi(argv[1]);
-	if (ngrams < 1 || ngrams > 3) {
-		fprintf(stderr, "invalid ngram value\n");
-		goto fin0;
-	}
-
-	if ((fpi = fopen(argv[2], "r")) == NULL) {
+	if ((fpi = fopen(infile, "r")) == NULL) {
 		fprintf(stderr, "file open error (in)\n");
 		goto fin0;
 	}
 
-	if ((fpo = fopen(argv[3], "w")) == NULL) {
+	if ((fpo = fopen(outfile, "w")) == NULL) {
 		fprintf(stderr, "file open error (out)\n");
 		goto fin1;
 	}
 
-	limit = (argc < 5) ? 0 : atoll(argv[4]);
-
-	yomi_engine = new yomi_mecab;
-
 	setlocale(LC_ALL, "ja_JP.UTF-8");
+
+	switch (engine) {
+	case ENGINE_MECAB:
+		yomi_engine = new yomi_mecab;
+		break;
+	default:
+		yomi_engine = new yomi_kakasi;
+		break;
+	}
+
 	cn.do_file(fpi, fpo, ngrams, limit);
 
 	delete yomi_engine;
