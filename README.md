@@ -26,15 +26,15 @@ libkkcで使用するdata.arpaは単なる言語モデルではなくかな漢�
 日本語ウェブコーパス2010から、data.arpaの作成に必要となるN-gramコーパス/形態素N-gram/頻度1000以上(3-gram)をダウンロードし、圧縮を解く処理を行う。
 実行にはbash, wget, xzが必要。
 
-### src/calc
+### src/add_yomi
 
 展開された3-gramデータから不要なものを取り除き、読み仮名を付加するツール。
 makeでビルドできるが、Debianであればlibkakasi2-dev, libmecab-devが必要。
 
 ### make.sh
 
-src/calcおよびIRSTLMを用い、無圧縮の日本語ウェブコーパス2010からlibkkc用のdata.arpaを作成するための一連の手順を記している。
-Debianであればapt-get install irstlmでIRSTLMをインストールできる。その後、fetch.sh→src/calcのmake→make.shの順に実行する。
+src/add_yomiおよびIRSTLMを用い、無圧縮の日本語ウェブコーパス2010からlibkkc用のdata.arpaを作成するための一連の手順を記している。
+Debianであればapt-get install irstlmでIRSTLMをインストールできる。その後、fetch.sh→src/add_yomiのmake→make.shの順に実行する。
 
 ## 結果
 
