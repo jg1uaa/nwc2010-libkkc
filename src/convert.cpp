@@ -21,18 +21,14 @@ int convert::tokenize(wchar_t *tokens[], int max_token, wchar_t *in)
 
 int convert::convert_yomi(wchar_t *yomi)
 {
-	size_t i;
+	size_t i, len = wcslen(yomi);
 	int ret = -1;
+
+	if (!len)
+		goto fin;
 
 	/* convert katakana -> hiragana */
 	for (i = 0; i < wcslen(yomi); i++) {
-		/* CJK unified ideographs:
-		 * retry convert (for kakasi errata) */
-		if (yomi[i] >= 0x4e00 && yomi[i] <= 0x9fff) {
-			ret = 1;
-			goto fin;
-		}
-
 		if (yomi[i] != L'ー' &&
 		    !(yomi[i] >= L'ぁ' && yomi[i] <= L'ん') &&
 		    !(yomi[i] >= L'ァ' && yomi[i] <= L'ヴ'))

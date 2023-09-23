@@ -9,8 +9,8 @@
 int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 {
 	int64_t ret = -1;  
-	int i, retry;
-	wchar_t *wp, temp[CONV_BUFSIZE];
+	int i;
+	wchar_t *wp;
 	long long c;
 
 	if (tokenize(token_wc, ngrams + 1, in_buf) < 0)
@@ -28,22 +28,13 @@ int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 			goto fin;
 		}
 
-		yomi_wc[i][0] = L'\0';
-		wcscpy(temp, token_wc[i]);
-		do {
-			if (yomi_engine->convert(temp, CONV_BUFSIZE) < 0)
-				goto fin;
+		wcscpy(yomi_wc[i], token_wc[i]);
+		if (yomi_engine->convert(yomi_wc[i], CONV_BUFSIZE) < 0)
+			goto fin;
 
-			/* sometimes yomi engine fails, retry */
-			retry = convert_yomi(temp);
-			if (retry < 0 ||
-			    (retry > 0 && !wcscmp(yomi_wc[i], temp))) {
-				/* error or nothing converted when retry */
-				goto fin;
-			}
-
-			wcscpy(yomi_wc[i], temp);
-		} while (retry);
+		/* sometimes yomi engine fails, discard */
+		if (convert_yomi(yomi_wc[i]) < 0)
+			goto fin;
 	}
 
 	for (i = 0; i < ngrams; i++) {
