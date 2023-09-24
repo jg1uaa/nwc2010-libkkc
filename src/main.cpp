@@ -9,11 +9,13 @@
 #include "convert_ngram.h"
 #include "yomi_kakasi.h"
 #include "yomi_mecab.h"
+#include "yomi_juman.h"
 
 yomi *yomi_engine;
 
 #define ENGINE_KAKASI	0
 #define ENGINE_MECAB	1
+#define ENGINE_JUMAN	2
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +25,7 @@ int main(int argc, char *argv[])
 	int64_t limit = 0;
 	convert_ngram cn;
 
-	while ((ch = getopt(argc, argv, "i:o:n:l:KM")) != -1) {
+	while ((ch = getopt(argc, argv, "i:o:n:l:KMJ")) != -1) {
 		switch (ch) {
 		case 'i':
 			infile = optarg;
@@ -42,6 +44,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'M':
 			engine = ENGINE_MECAB;
+			break;
+		case 'J':
+			engine = ENGINE_JUMAN;
 			break;
 		default:
 			break;
@@ -69,6 +74,9 @@ int main(int argc, char *argv[])
 	switch (engine) {
 	case ENGINE_MECAB:
 		yomi_engine = new yomi_mecab;
+		break;
+	case ENGINE_JUMAN:
+		yomi_engine = new yomi_juman;
 		break;
 	default:
 		yomi_engine = new yomi_kakasi;

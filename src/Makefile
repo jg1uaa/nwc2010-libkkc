@@ -1,6 +1,6 @@
 TARGET = add_yomi
 OBJS = ucs2euc.o convert.o convert_ngram.o main.o yomi.o \
-	yomi_kakasi.o yomi_mecab.o
+	yomi_kakasi.o yomi_mecab.o juman_client.o yomi_juman.o
 CFLAGS = -O2 -Wall
 CXXFLAGS = -O2 -Wall -std=c++17
 
@@ -32,6 +32,12 @@ yomi_kakasi.o: yomi_kakasi.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 yomi_mecab.o: yomi_mecab.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+juman_client.o: juman_client.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+yomi_juman.o: yomi_juman.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(TARGET): $(OBJS)
