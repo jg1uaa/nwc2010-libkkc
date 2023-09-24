@@ -48,11 +48,14 @@ fin:
 
 yomi_kakasi::yomi_kakasi(void)
 {
-	const char *kakasi_argv[] = {"kakasi", "-ieuc", "-KH", "-JH"};
+	/* -HK is needed to handle "ヴ"
+	 * use -JK to reduce misconvert, for example: "酔っ払い"
+	 * -JK "イ" (passed), -JH "払イ" (rejected as invalid result) */
+	const char *kakasi_argv[] = {"kakasi", "-ieuc", "-HK", "-JH"};
 
 	if (kakasi_getopt_argv(sizeof(kakasi_argv) / sizeof(char *),
 			       (char **)kakasi_argv))
-		throw(std::invalid_argument("kakasi_new error"));
+		throw(std::invalid_argument("kakasi_getopt_argv error"));
 }
 
 int yomi_kakasi::convert(wchar_t *inout, size_t sz)

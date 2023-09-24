@@ -28,6 +28,12 @@ int64_t convert_ngram::do_line(int ngrams, wchar_t *out_buf, wchar_t *in_buf)
 			goto fin;
 		}
 
+		/* try katakana/hiragana -> hiragana convert */
+		wcscpy(yomi_wc[i], token_wc[i]);
+		if (!convert_yomi(yomi_wc[i]))
+			continue;
+
+		/* retry with yomi engine */
 		wcscpy(yomi_wc[i], token_wc[i]);
 		if (yomi_engine->convert(yomi_wc[i], CONV_BUFSIZE) < 0)
 			goto fin;
