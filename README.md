@@ -29,7 +29,7 @@ libkkcで使用するdata.arpaは単なる言語モデルではなくかな漢�
 ### src/add_yomi
 
 展開された3-gramデータから不要なものを取り除き、読み仮名を付加するツール。
-makeでビルドできるが、Debianであればlibkakasi2-dev, libmecab-devが必要。
+makeでビルドできるが、Debianであればlibkakasi2-dev, libmecab-dev, libchasen-devが必要。
 
 ### make.sh
 
