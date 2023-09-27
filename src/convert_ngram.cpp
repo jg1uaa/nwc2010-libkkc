@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 SASANO Takayoshi <uaa@uaa.org.uk>
 
 #include <cstring>
+#include <cinttypes>
 #include "convert_ngram.h"
 #include "datastore.h"
 #include "yomi.h"
@@ -76,7 +77,7 @@ void convert_ngram::do_file(FILE *fpi, FILE *fpo, int ngrams, int64_t limit)
 
 	/* pass 2 */
 	for (auto i = d.db.begin(); i != d.db.end(); i++) {
-		fprintf(fpo, "%ls\t%ld\n",
+		fprintf(fpo, "%ls\t%" PRId64 "\n",
 			d.db[i->first].key.c_str(), d.db[i->first].value);
 	}
 }
