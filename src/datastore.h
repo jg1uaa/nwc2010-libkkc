@@ -22,7 +22,8 @@ public:
 		d.key = key;
 		d.value = value;
 
-		db.emplace(d.key, d);
+		if (!db.try_emplace(d.key, d).second)
+			db[key].value += value;
 	};
 
 	void init(void) {
