@@ -1,16 +1,24 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 SASANO Takayoshi <uaa@uaa.org.uk>
 
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 #include "yomi_mecab.h"
 
 yomi_mecab::yomi_mecab(void)
 {
-	const char *mecab_argv[] = {"mecab", "-Oyomi"};
+	char *p, arg[384] = "mecab -Oyomi";
 
-	if ((mctx = mecab_new(sizeof(mecab_argv) / sizeof(char *),
-			      (char **)mecab_argv)) == NULL)
-		throw(std::invalid_argument("mecab_new error"));
+	if ((p = getenv("MECAB_DIC")) != NULL && strlen(p)) {
+		size_t n = strlen(arg);
+		snprintf(arg + n, sizeof(arg) - n, " -d%s", p);
+		fprintf(stderr, "dictionary at %s\n", p);
+	}
+
+	if ((mctx = mecab_new2(arg)) == NULL)
+		throw(std::invalid_argument("mecab_new2 error"));
 }
 
 int yomi_mecab::convert(wchar_t *inout, size_t sz)
