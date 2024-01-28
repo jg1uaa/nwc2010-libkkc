@@ -1,62 +1,72 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 SASANO Takayoshi <uaa@uaa.org.uk>
+// SPDX-FileCopyrightText: 2023-2024 SASANO Takayoshi <uaa@uaa.org.uk>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <iconv.h>
+
+#define SS2 0x8e
+#define SS3 0x8f
 
 #define TABLE_SIZE 65536
 
 static uint16_t ucs2euc[TABLE_SIZE];
 static uint16_t euc2ucs[TABLE_SIZE];
 
-static int input_table(char *filename)
+static int create_table(void)
 {
-#define jis2euc(x) ((x) | 0x8080)
-
-	int ret = -1;
-	FILE *fp;
-	char buf[256], *p;
-	long sjis __attribute__((unused)), jis, unicode;
-
-	if ((fp = fopen(filename, "r")) == NULL) {
-		printf("file open error\n");
-		goto fin0;
-	}
+	iconv_t cd;
+	int ucs, euc;
+	unsigned char in[2], out[4];
+	char *in_p, *out_p;
+	ssize_t n;
+	size_t insize, outsize;
 
 	memset(ucs2euc, 0, sizeof(ucs2euc));
 	memset(euc2ucs, 0, sizeof(euc2ucs));
 
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		/* skip comment line */
-		if (buf[0] == '#')
-			continue;
-
-		/* get character code numbers */
-		sjis = strtol(buf, &p, 0);
-		if (*p == '\0')
-			continue;
-		jis = strtol(p, &p, 0);
-		if (*p == '\0')
-			continue;
-		unicode = strtol(p, &p, 0);
-
-		/* skip invalid code */
-		if (unicode <= 0 || unicode >= TABLE_SIZE ||
-		    jis <= 0 || jis >= TABLE_SIZE)
-			continue;
-
-		/* create unicode <- -> EUC-JP table */
-		ucs2euc[unicode] = jis2euc(jis);
-		euc2ucs[jis2euc(jis)] = unicode;
+	if ((cd = iconv_open("EUC-JP", "UCS-2BE")) < 0) {
+		printf("iconv_open\n");
+		return -1;
 	}
 
-	ret = 0;
+	for (ucs = 0; ucs < 0x10000; ucs++) {
+		/* skip C0/C1 control, surrogate, private area */
+		if ((ucs >= 0x0000 && ucs <= 0x001f) ||
+		    (ucs >= 0x0080 && ucs <= 0x009f) ||
+		    (ucs >= 0xd800 && ucs <= 0xdfff) ||
+		    (ucs >= 0xe000 && ucs <= 0xf8ff))
+			continue;
 
-	fclose(fp);
-fin0:
-	return ret;
+		in[0] = ucs >> 8;
+		in[1] = ucs;
+
+		in_p = (char *)in;
+		out_p = (char *)out;
+		insize = sizeof(in);
+		outsize = sizeof(out);
+
+		if ((n = iconv(cd, &in_p, &insize, &out_p, &outsize)) < 0)
+			continue;
+
+		switch (out[0]) {
+		case 0x00 ... 0x7f:
+		case SS2:
+		case SS3:
+			euc = 0;
+			break;
+		default:
+			euc =(out[0] << 8) | out[1];
+			break;
+		}
+
+		euc2ucs[euc] = ucs;
+		ucs2euc[ucs] = euc;
+	}
+
+	iconv_close(cd);
+	return 0;
 }
 
 static void dump_table(FILE *fp, uint16_t *table, int size)
@@ -77,7 +87,7 @@ static int output_result(char *filename)
 	if ((fp = fopen(filename, "w")) == NULL)
 		return -1;
 
-	fprintf(fp, "// SPDX-License-Identifier: Unicode-TOU\n\n");
+	fprintf(fp, "// SPDX-License-Identifier: Unlicense\n\n");
 	fprintf(fp, "#include <cstdint>\n\n");
 
 	fprintf(fp, "uint16_t ucs2euc[%d] = {\n", TABLE_SIZE);
@@ -95,15 +105,15 @@ static int output_result(char *filename)
 
 int main(int argc, char *argv[])
 {
-	if (argc < 3) {
-		printf("%s: usage [infile] [outfile]\n", argv[0]);
+	if (argc < 2) {
+		printf("%s: usage [outfile]\n", argv[0]);
 		goto fin0;
 	}
 
-	if (input_table(argv[1]))
+	if (create_table())
 		goto fin0;
 
-	output_result(argv[2]);
+	output_result(argv[1]);
 
 fin0:
 	return 0;
